@@ -1,11 +1,11 @@
 import datetime
+import sqlite3 as sl
 import string
 
 import PySimpleGUI as sg
-from psgtray import SystemTray
-import sqlite3 as sl
-import pyperclip
 import enchant
+import pyperclip
+from psgtray import SystemTray
 
 
 def addToBase(task, dell=False):
@@ -82,7 +82,8 @@ def startForm():
 
     ]
     # sg.theme('Light Green 6')
-    window = sg.Window('Task book', layout, icon='Task.ico', finalize=True)  # , finalize=True, enable_close_attempted_event=True)
+    window = sg.Window('Task book', layout, icon='Task.ico',
+                       finalize=True)  # , finalize=True, enable_close_attempted_event=True)
 
     multiline = window['multiline']
     widget = multiline.Widget
@@ -131,7 +132,7 @@ def startForm():
         elif event == '-dellrecord-':
             if len(values['fullTask']) != 0:
                 output_var = values['fullTask'][0]
-                addToBase(output_var,True)
+                addToBase(output_var, True)
             records = fromDase()
             window.Element('fullTask').Update(values=[row[0] for row in records])
 
@@ -186,7 +187,7 @@ def startForm():
                         verifiable_words.append(w)
 
                 try:
-                    widget.tag_config('WrogText', foreground='red') #'white')#, background='blue')
+                    widget.tag_config('WrogText', foreground='red')  # 'white')#, background='blue')
                     for w in verifiable_words:
                         ind = line.index(w)
                         widget.tag_add('WrogText', f'{nline}.{ind}', f'{nline}.{ind + len(w)}')
