@@ -6,6 +6,11 @@ import PySimpleGUI as sg
 import enchant
 import pyperclip
 from psgtray import SystemTray
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+# from selenium import By
+import time
 
 
 def addToBase(task, dell=False):
@@ -54,6 +59,20 @@ def fromDase():
         return []
 
 
+def copyToClip(window):
+    lst = window.Element('choiceTask').get_list_values()
+    if len(lst) != 0:
+        copyText = 'Задачи:' if len(lst) > 1 else 'Задача:'
+        for i in lst:
+            copyText += '\n' + i
+
+        print('Текст скопирован в буфер обмена')
+        print(copyText)
+        pyperclip.copy(copyText)
+    else:
+        pyperclip.copy('')
+
+
 def startForm():
     dictionaryEn = enchant.Dict("en_US")
     dictionary = enchant.Dict("ru_RU")
@@ -78,7 +97,10 @@ def startForm():
          sg.Submit(button_text='Удалить запись', key='-dellrecord-')],
 
         [sg.Multiline(size=(124, 5), disabled=False, key='multiline', enable_events=True)],
-        [sg.Output(size=(124, 5), key='outPut')]
+        [sg.Output(size=(124, 5), key='outPut')],
+
+        [sg.Push(),
+         sg.Submit(button_text='b24', key='bitrix')]
 
     ]
     # sg.theme('Light Green 6')
@@ -137,15 +159,7 @@ def startForm():
             window.Element('fullTask').Update(values=[row[0] for row in records])
 
         elif event == '-copy-':
-            lst = window.Element('choiceTask').get_list_values()
-            if len(lst) != 0:
-                copyText = 'Задачи:' if len(lst) > 1 else 'Задача:'
-                for i in lst:
-                    copyText += '\n' + i
-
-                print('Текст скопирован в буфер обмена')
-                print(copyText)
-                pyperclip.copy(copyText)
+            copyToClip(window)
 
         elif event == '-past-':
             multiline.update(pyperclip.paste() + '\n', append=True)
@@ -155,6 +169,105 @@ def startForm():
                 addToBase(i)
             records = fromDase()
             window.Element('fullTask').Update(values=[row[0] for row in records])
+
+        elif event in ('bitrix'):
+
+            try:
+                driver = webdriver.Chrome(executable_path=r"cromedriver\chromedriver.exe")
+                # executable_path="C:\\Users\\DELL\\PycharmProjects\\TaskBook\\cromedriver\\chromedriver.exe")
+                driver.get(url="https://vodopad-portal.ru")
+
+                # Авторизация
+                login = driver.find_element(by="name", value="USER_LOGIN");login.clear();login.send_keys('kiper');passw = driver.find_element(By.NAME, value="USER_PASSWORD");passw.clear();passw.send_keys('Rbg2018!')
+                driver.find_element(By.CLASS_NAME, value="login-btn").click()
+                time.sleep(3)
+
+                # Шторка    если не откроется поdторить
+                repeat = True;countRepeat = 0
+                while repeat:
+                    # Открыть попап меню
+                    driver.find_element(By.ID, value="timeman-container").click()
+                    time.sleep(3)
+
+                    try:
+                        # # Начать рабочий день
+                        # driver.find_element(By.CLASS_NAME, value="ui-btn-icon-start").click()
+                        # time.sleep(5)
+
+                        # # Перерыв
+                        # driver.find_element(By.CLASS_NAME, value="text-start").click()
+                        # time.sleep(5)
+
+                        # # Продолжить
+                        # driver.find_element(By.CLASS_NAME, value="text-pause").click()
+                        # time.sleep(5)
+
+                        # # Завершить рабочий день
+                        # driver.find_element(By.CLASS_NAME, value="ui-btn-icon-stop").click()
+                        # time.sleep(3)
+
+                        # Отчет за день
+                        driver.find_element(By.ID, value="work_report_call_link").click()
+                        time.sleep(3)
+                        iframe = driver.find_element(By.CLASS_NAME, value="lha-iframe")
+
+                        iframe.send_keys(Keys.CONTROL, 'a')
+                        iframe.send_keys(Keys.DELETE)
+
+                        copyToClip(window)
+                        if pyperclip.paste() != '':
+                            iframe.send_keys(Keys.CONTROL, 'v')  # paste
+                        else:
+                            print('Буфер пуст')
+
+                        time.sleep(9)
+
+                        repeat = False
+                    except:
+                        driver.refresh()
+                        countRepeat += 1
+                        repeat = True if countRepeat <= 3 else False
+
+                    # ПАУЗА
+                    # pause_btn = driver.find_element(By.CLASS_NAME, value="text-start")
+                    # pause_btn.click()
+                    # time.sleep(5)
+
+                    # # ЗАВЕРШИТЬ
+                    # end_btn = driver.find_element(By.CLASS_NAME, value="ui-btn-icon-stop")
+                    # end_btn.click()
+                    # time.sleep(3)
+
+                    # # Отчет за день
+                    # driver.find_element(By.ID, value="work_report_call_link").click()
+                    # time.sleep(3)
+                    #
+                    # # frame = driver.find_element(By.ID, value="LHE_iframe_obReportWeekly_27156")
+                    # frame = driver.find_element(By.CLASS_NAME, value="lha-iframe")
+                    # frame.clear()
+                    # frame.send_keys('тест1'
+                    #                 'тест2')
+                    # time.sleep(9)
+
+                # < span
+                # id = "work_report_call_link"
+                # class ="wr-call-lable" style="display: inline-block;" > Отчет за день < / span >
+                # < button
+                # class ="ui-btn ui-btn-danger ui-btn-icon-stop" > Завершить рабочий день < / button >
+
+                # < button
+                # class ="ui-btn ui-btn-icon-pause tm-btn-pause" >
+                # < span class ="text-pause" > Продолжить < / span >
+                # < span class ="text-start" > Перерыв < / span >
+                # < / button >
+
+
+            except Exception as e:
+                print(e)
+                print('Ошибка')
+            finally:
+                driver.close()
+                driver.quit()
 
         if event == 'fullTask':
             if len(values['fullTask']) != 0:
