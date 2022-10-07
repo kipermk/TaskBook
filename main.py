@@ -5,6 +5,7 @@ import string
 import PySimpleGUI as sg
 import enchant
 import pyperclip
+from auth_data import b24_password
 from psgtray import SystemTray
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -178,7 +179,8 @@ def startForm():
                 driver.get(url="https://vodopad-portal.ru")
 
                 # Авторизация
-                login = driver.find_element(by="name", value="USER_LOGIN");login.clear();login.send_keys('kiper');passw = driver.find_element(By.NAME, value="USER_PASSWORD");passw.clear();passw.send_keys('Rbg2018!')
+                login = driver.find_element(by="name", value="USER_LOGIN");login.clear();login.send_keys('kiper')
+                passw = driver.find_element(By.NAME, value="USER_PASSWORD");passw.clear();passw.send_keys(b24_password)
                 driver.find_element(By.CLASS_NAME, value="login-btn").click()
                 time.sleep(3)
 
